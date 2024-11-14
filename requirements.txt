@@ -25,6 +25,7 @@ omegaconf>=2.1.0
 opt_einsum>=3.3.0
 einops>=0.4.0
 lovely-tensors>=0.1.0  # for debugging
+torchinfo==1.8.0 # for summary of models
 
 # Optional development dependencies
 jupyter>=1.0.0

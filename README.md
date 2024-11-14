@@ -27,8 +27,8 @@ pip install jupyter
 ### Downloading human and monkey data
 
 If you want to run the experiments on the human and monkey data, download and store the datasets:
-- Monkey data: https://dandiarchive.org/dandiset/000128 (store in `data/monkey`)
-- Human data (Willet et al, 2023): https://datadryad.org/stash/downloads/file_stream/2547369 (store in `data/human`)
+- Monkey data: https://dandiarchive.org/dandiset/000128 (download using `dandi download DANDI:000128/0.220113.0400` in `data/monkey`)
+- Human data (Willet et al, 2023): https://datadryad.org/stash/downloads/file_stream/2547369 (download using `wget` in `data/human`, then unzip using `tar -xvf data/human/2547369`)
 
 
 ## Running the experiments
