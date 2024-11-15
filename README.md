@@ -28,48 +28,28 @@ pip install jupyter
 
 If you want to run the experiments on the human and monkey data, download and store the datasets:
 - Monkey data: https://dandiarchive.org/dandiset/000128 (download using `dandi download DANDI:000128/0.220113.0400` in `data/monkey`)
-- Human data (Willet et al, 2023): https://datadryad.org/stash/downloads/file_stream/2547369 (download using `wget` in `data/human`, then unzip using `tar -xvf data/human/2547369`)
+- Human data (Willet et al, 2023): https://datadryad.org/stash/downloads/file_stream/2547369 (download in `data/human`, then unzip using `tar -xvf data/human/2547369`)
 
 
 ## Running the experiments
 
-The core model and data loading code is in the `ldns` directory. The classes and functions in this code are used in the notebooks and scripts in the `notebooks` directory.
-
-### Lorenz system
-
-
-
-### Human BCI data
-
-
-
-### Monkey reach data (unconditional)
-
-
-### Monkey reach data (conditional)
-
-
+The core model and data loading code is in the [`ldns` directory](ldns). Training and evaluation is done in .ipynb files in the [`notebooks` directory](notebooks).
+| Dataset | Train and Evaluate | Notebook |
+|---------|-------------------|----------|
+| **Lorenz system** | autoencoder | [`notebooks/train_autoencoder_Lorenz.ipynb`](notebooks/train_autoencoder_Lorenz.ipynb) |
+| | diffusion model | [`notebooks/train_diffusion_Lorenz.ipynb`](notebooks/train_diffusion_Lorenz.ipynb) |
+| **Human BCI data** | autoencoder | [`notebooks/train_autoencoder_human.ipynb`](notebooks/train_autoencoder_human.ipynb) *(cleaning in progress)* |
+| | diffusion model | [`notebooks/train_diffusion_human.ipynb`](notebooks/train_diffusion_human.ipynb) *(cleaning in progress)* |
+| **Monkey reach data** <br> (unconditional) | autoencoder | [`notebooks/train_autoencoder_monkey.ipynb`](notebooks/train_autoencoder_monkey.ipynb) *(cleaning in progress)* |
+| | diffusion model | [`notebooks/train_diffusion_monkey.ipynb`](notebooks/train_diffusion_monkey.ipynb) *(cleaning in progress)* |
+| **Monkey reach data** <br> (conditional) | autoencoder | [`notebooks/train_autoencoder_monkey_conditional.ipynb`](notebooks/train_autoencoder_monkey_conditional.ipynb) *(cleaning in progress)* |
+| | diffusion model | [`notebooks/train_diffusion_monkey_conditional.ipynb`](notebooks/train_diffusion_monkey_conditional.ipynb) *(cleaning in progress)* |
 
 ## Baselines for the Lorenz and Monkey Reach Data
 
-In the paper, we compared LDNS to a number of VAE-based baselines. The code for these baselines can be found in the `baselines` directory.
+In the paper, we compared LDNS to a number of VAE-based baselines. The code for these baselines can be found in the [`baselines` directory](baselines).
 
-### LFADS
-> Latent Factor Analysis via Dynamical Systems (Pandarinath et al, 2018)
-
-**Lorenz system** We 
-
-
-### pi-VAE
-> Poisson Identifiable VAE (Zhou et al, 2024)
-
-### TNDM
-> Targeted Neural Dynamical Modeling (Hurwitz et al, 2022)
-
-
-
-
-> Note that this repository is work in progress. 
+> Refactoring and cleaning of the baseline code is in progress. We appreciate your patience!
 
 ## Citation
 
@@ -82,4 +62,4 @@ In the paper, we compared LDNS to a number of VAE-based baselines. The code for 
 }
 ```
 ## Contact
-Questions regarding the code should be addressed to jaivardhan.kapoor@uni-tuebingen.de or auguste.schulz@uni-tuebingen.de.
+Please open a Github issue for any questions, or send an email to jaivardhan.kapoor@uni-tuebingen.de or auguste.schulz@uni-tuebingen.de.
