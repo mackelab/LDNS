@@ -1,0 +1,40 @@
+# Core dependencies
+numpy<=1.26
+torch
+torchvision
+tqdm
+
+# Data handling and processing
+pandas>=1.3.0
+scikit-learn
+scipy<=1.13
+
+# Diffusion models
+diffusers==0.3.0 # this version contains utilities such as EMAModel
+
+# Neural data tools
+nlb_tools>=0.0.1
+dysts<=0.6
+dandi>=0.60.0 # for monkey data
+
+# Text processing
+phonemizer>=3.0.0
+
+# Utilities
+omegaconf>=2.1.0
+opt_einsum>=3.3.0
+einops>=0.4.0
+lovely-tensors>=0.1.0  # for debugging
+torchinfo==1.8.0 # for summary of models
+
+# Optional development dependencies
+jupyter>=1.0.0
+pytest>=6.0.0
+black>=21.0.0
+flake8>=3.9.0
+
+# logging
+wandb
+
+# training
+accelerate==1.1.1
