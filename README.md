@@ -38,12 +38,14 @@ The core model and data loading code is in the [`ldns` directory](ldns). Trainin
 |---------|-------------------|----------|
 | **Lorenz system** | autoencoder | [`notebooks/train_autoencoder_Lorenz.ipynb`](notebooks/train_autoencoder_Lorenz.ipynb) |
 | | diffusion model | [`notebooks/train_diffusion_Lorenz.ipynb`](notebooks/train_diffusion_Lorenz.ipynb) |
-| **Human BCI data** | autoencoder | [`notebooks/train_autoencoder_human.ipynb`](notebooks/train_autoencoder_human.ipynb) *(cleaning in progress)* |
-| | diffusion model | [`notebooks/train_diffusion_human.ipynb`](notebooks/train_diffusion_human.ipynb) *(cleaning in progress)* |
-| **Monkey reach data** <br> (unconditional) | autoencoder | [`notebooks/train_autoencoder_monkey.ipynb`](notebooks/train_autoencoder_monkey.ipynb) *(cleaning in progress)* |
-| | diffusion model | [`notebooks/train_diffusion_monkey.ipynb`](notebooks/train_diffusion_monkey.ipynb) *(cleaning in progress)* |
-| **Monkey reach data** <br> (conditional) | autoencoder | [`notebooks/train_autoencoder_monkey_conditional.ipynb`](notebooks/train_autoencoder_monkey_conditional.ipynb) *(cleaning in progress)* |
-| | diffusion model | [`notebooks/train_diffusion_monkey_conditional.ipynb`](notebooks/train_diffusion_monkey_conditional.ipynb) *(cleaning in progress)* |
+| **Human BCI data** | autoencoder | `notebooks/train_autoencoder_human.ipynb`|
+| | diffusion model | `notebooks/train_diffusion_human.ipynb`|
+| **Monkey reach data** <br> | autoencoder | `notebooks/train_autoencoder_monkey.ipynb` |
+| | diffusion model (unconditional) | `notebooks/train_diffusion_monkey.ipynb` |
+| | diffusion model (angle-conditioned) | `notebooks/train_diffusion_monkey_angle_conditioned.ipynb` |
+| | diffusion model (velocity-conditioned) | `notebooks/train_diffusion_monkey_velocity_conditioned.ipynb` |
+
+> **Note**: we are currently cleaning up the notebooks and will update this section soon.
 
 ## Baselines for the Lorenz and Monkey Reach Data
 

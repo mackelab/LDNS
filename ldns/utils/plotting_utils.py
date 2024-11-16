@@ -773,29 +773,34 @@ def plot_spiketrain_stats(
     labels=["gt", "recs"],
     figsize=(12, 6),
     color=None,
+    to_plot=["mean_isi", "std_isi"],
 ):
     """
     Plot mean isi and std as well as cv and cv2 as scatter plots with square axes and consistent limits.
     """
-    fig, axs = plt.subplots(1, 4, figsize=figsize)
+    if len(to_plot) == 2:
+        fig, axs = plt.subplots(1, 2, figsize=figsize)
+    else:
+        fig, axs = plt.subplots(1, 4, figsize=figsize)
     for i, (key, value) in enumerate(spike_stats_1.items()):
-        ax = axs.flat[i]
-        vals_1 = value.flatten()
-        vals_2 = spike_stats_2[key].flatten()
-        x_min, x_max = (
+        if key in to_plot:
+            ax = axs.flat[i]
+            vals_1 = value.flatten()
+            vals_2 = spike_stats_2[key].flatten()
+            x_min, x_max = (
             np.min([np.nanmin(vals_1), np.nanmin(vals_2)]),
-            np.max([np.nanmax(vals_1), np.nanmax(vals_2)]),
-        )
-        x_min += -0.1 * x_max
-        x_max += 0.1 * x_max
-        ax.plot(vals_1, vals_2, ".", alpha=0.5, color=color)
-        ax.set_aspect("equal", adjustable="box")
-        ax.plot([x_min, x_max], [x_min, x_max], ls="--", c="black")
-        ax.set_xlabel(labels[0])
-        ax.set_ylabel(labels[1])
-        ax.set_title(key)
-        ax.set_xlim(x_min, x_max)
-        ax.set_ylim(x_min, x_max)
+                np.max([np.nanmax(vals_1), np.nanmax(vals_2)]),
+            )
+            x_min += -0.1 * x_max
+            x_max += 0.1 * x_max
+            ax.plot(vals_1, vals_2, ".", alpha=0.5, color=color)
+            ax.set_aspect("equal", adjustable="box")
+            ax.plot([x_min, x_max], [x_min, x_max], ls="--", c="black")
+            ax.set_xlabel(labels[0])
+            ax.set_ylabel(labels[1])
+            ax.set_title(key)
+            ax.set_xlim(x_min, x_max)
+            ax.set_ylim(x_min, x_max)
 
     plt.tight_layout()
 
@@ -1255,6 +1260,7 @@ def plot_3d_latent_trajectory(
     indices=[0, 1, 2],
     save=False,
     save_path=None,
+    plot_real_rates=True,
 ):
     from mpl_toolkits.mplot3d import Axes3D
     from matplotlib.animation import FuncAnimation
@@ -1264,14 +1270,16 @@ def plot_3d_latent_trajectory(
     ae.eval()
     for batch in val_dataloader:
         signal = batch["signal"]
-        real_rates = batch["rates"]
+        if plot_real_rates:
+            real_rates = batch["rates"]
         with torch.no_grad():
             output_rates, z = ae(signal)
             output_rates = output_rates.cpu()
             z = z.cpu()
 
         signal = signal.cpu()  # move signal to cpu
-        real_rates = real_rates.cpu()
+        if plot_real_rates:
+            real_rates = real_rates.cpu()
         break
 
     # Create a figure and an axis
@@ -1740,6 +1748,7 @@ def evaluate_autoencoder(
         sample_idx=idx,
         save=save,
         indices=indices,
+        plot_real_rates=plot_real_rates,
         save_path=(save_path + "3d_latent_trajectory" if save_path is not None else None),
     )
 
@@ -1761,6 +1770,7 @@ def evaluate_autoencoder(
         sample_idx=idx,
         save=save,
         indices=indices,
+        plot_real_rates=plot_real_rates,
         save_path=(save_path + "3d_latent_trajectory_longer" if save_path is not None else None),
     )
 

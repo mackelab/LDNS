@@ -17,11 +17,6 @@ def neg_log_likelihood(output, target):
     return loss(output, target).sum() / output.size(0)
 
 
-def kl_divergence(mu, logvar):
-    loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    return loss / mu.size(0)
-
-
 def latent_regularizer(z, cfg):
     """ regualarizer that penalizes the squared difference between latents at neighbouring time steps. This returns sum of squared differences, NOT mean.
     
