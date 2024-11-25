@@ -1,4 +1,16 @@
-"""Standalone version of Structured State Space sequence model (S4)."""
+"""
+Structured State Space sequence model (S4).
+
+This module implements the S4 model architecture for sequence modeling.
+Based on the original implementation at:
+https://github.com/state-spaces/s4/blob/main/models/s4/s4.py
+which is licensed under the Apache-2.0 License.
+
+For details, see:
+Albert Gu, Karan Goel, and Christopher Ré. 
+"Efficiently Modeling Long Sequences with Structured State Spaces."
+International Conference on Learning Representations (ICLR), 2022.
+"""
 
 import logging
 import math
@@ -44,123 +56,7 @@ log = get_logger(__name__)
 
 """Structured matrix kernels"""
 
-# Try CUDA extension
-try:
-    from extensions.kernels.cauchy import cauchy_mult as cauchy_cuda
-    from extensions.kernels.vandermonde import log_vandermonde_cuda
 
-    has_cuda_extension = True
-    log.info(
-        "CUDA extension for structured kernels (Cauchy and Vandermonde multiplication) found."
-    )
-except:
-    log.warning(
-        "CUDA extension for structured kernels (Cauchy and Vandermonde multiplication) not found. Install by going to extensions/kernels/ and running `python setup.py install`, for improved speed and memory efficiency. Note that the kernel changed for state-spaces 4.0 and must be recompiled."
-    )
-    has_cuda_extension = False
-
-# # Try pykeops
-# try:
-#     import pykeops
-#     from pykeops.torch import Genred
-#     has_pykeops = True
-#     log.info("Pykeops installation found.")
-
-#     def _broadcast_dims(*tensors):
-#         max_dim = max([len(tensor.shape) for tensor in tensors])
-#         tensors = [tensor.view((1,)*(max_dim-len(tensor.shape))+tensor.shape) for tensor in tensors]
-#         return tensors
-
-#     def cauchy_keops(v, z, w):
-#         expr_num = 'z * ComplexReal(v) - Real2Complex(Sum(v * w))'
-#         expr_denom = 'ComplexMult(z-w, z-Conj(w))'
-
-#         cauchy_mult = Genred(
-#             f'ComplexDivide({expr_num}, {expr_denom})',
-#             [
-#                 'v = Vj(2)',
-#                 'z = Vi(2)',
-#                 'w = Vj(2)',
-#             ],
-#             reduction_op='Sum',
-#             axis=1,
-#         )
-
-#         v, z, w = _broadcast_dims(v, z, w)
-#         v = _c2r(v)
-#         z = _c2r(z)
-#         w = _c2r(w)
-
-#         r = 2*cauchy_mult(v, z, w, backend='GPU')
-#         return _r2c(r)
-
-#     def log_vandermonde_keops(v, x, L):
-#         expr = 'ComplexMult(v, ComplexExp(ComplexMult(x, l)))'
-#         vandermonde_mult = Genred(
-#             expr,
-#             [
-#                 'v = Vj(2)',
-#                 'x = Vj(2)',
-#                 'l = Vi(2)',
-#             ],
-#             reduction_op='Sum',
-#             axis=1,
-#         )
-
-#         l = torch.arange(L).to(x)
-#         v, x, l = _broadcast_dims(v, x, l)
-#         v = _c2r(v)
-#         x = _c2r(x)
-#         l = _c2r(l)
-
-#         r = vandermonde_mult(v, x, l, backend='GPU')
-#         return 2*_r2c(r).real
-
-#     def log_vandermonde_transpose_keops(u, v, x, L):
-#         """
-#         u: ... H L
-#         v: ... H N
-#         x: ... H N
-#         Returns: ... H N
-
-#         V = Vandermonde(a, L) : (H N L)
-#         contract_L(V * u * v)
-#         """
-#         expr = 'ComplexMult(ComplexMult(v, u), ComplexExp(ComplexMult(x, l)))'
-#         vandermonde_mult = Genred(
-#             expr,
-#             [
-#                 'u = Vj(2)',
-#                 'v = Vi(2)',
-#                 'x = Vi(2)',
-#                 'l = Vj(2)',
-#             ],
-#             reduction_op='Sum',
-#             axis=1,
-#         )
-
-#         l = torch.arange(L).to(x)
-#         u, v, x, l = _broadcast_dims(u, v, x, l)
-#         u = _c2r(u)
-#         v = _c2r(v)
-#         x = _c2r(x)
-#         l = _c2r(l)
-
-#         r = vandermonde_mult(u, v, x, l, backend='GPU')
-#         return _r2c(r)
-
-# except ImportError:
-#     has_pykeops = False
-#     if not has_cuda_extension:
-#         log.warning(
-#             "Falling back on slow Cauchy and Vandermonde kernel. Install at least one of pykeops or the CUDA extension for better speed and memory efficiency."
-#         )
-
-
-has_pykeops = False
-
-
-# Fallback versions
 def cauchy_naive(v, z, w):
     """
     v: (..., N)
@@ -1245,18 +1141,7 @@ class SSMKernelDiag(SSMKernel):
         # Combine B and C
         C = (B[:, None, :, :] * C).view(-1, self.H, self.N)
 
-        # Dispatch which Vandermonde kernel to use
-        if (
-            has_cuda_extension
-            and C.dtype == torch.cfloat
-            and C.device.type == "cuda"
-            and self.backend == "cuda"
-        ):
-            log_vandermonde = log_vandermonde_cuda
-        elif has_pykeops and self.backend in ["cuda", "keops"]:
-            log_vandermonde = log_vandermonde_keops
-        else:
-            log_vandermonde = log_vandermonde_naive
+        log_vandermonde = log_vandermonde_naive
 
         # Main kernel
         if self.disc == "zoh":
@@ -1342,10 +1227,7 @@ class SSMKernelDiag(SSMKernel):
         AL = self.dA ** u.size(-1)
         u = u.flip(-1).to(self.dA).contiguous()  # (B H L)
         # Dispatch which Vandermonde kernel to use
-        if has_pykeops and self.backend in ["cuda", "keops"]:
-            log_vandermonde_transpose = log_vandermonde_transpose_keops
-        else:
-            log_vandermonde_transpose = log_vandermonde_transpose_naive
+        log_vandermonde_transpose = log_vandermonde_transpose_naive
         v = log_vandermonde_transpose(u, self.dB, self.dA.log(), u.size(-1))
         next_state = AL * state + v
         return next_state
@@ -1519,17 +1401,7 @@ class SSMKernelDPLR(SSMKernelDiag):
         v = v * dt  # Incorporate dt into B
 
         # Dispatch which Cauchy kernel to use
-        if (
-            has_cuda_extension
-            and z.dtype == torch.cfloat
-            and z.device.type == "cuda"
-            and self.kernel == "cuda"
-        ):
-            cauchy_mult = cauchy_cuda
-        elif has_pykeops and self.kernel in ["cuda", "keops"]:
-            cauchy_mult = cauchy_keops
-        else:
-            cauchy_mult = cauchy_naive
+        cauchy_mult = cauchy_naive
         # Calculate resolvent at omega
         r = cauchy_mult(v, z, A)
 
