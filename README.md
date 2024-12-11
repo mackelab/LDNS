@@ -39,6 +39,7 @@ The core model and data loading code is in the [`ldns` directory](ldns). Trainin
 | **Lorenz system** | train ae | [`notebooks/train_autoencoder_Lorenz.ipynb`](notebooks/train_autoencoder_Lorenz.ipynb) |
 | | train diffusion | [`notebooks/train_diffusion_Lorenz.ipynb`](notebooks/train_diffusion_Lorenz.ipynb) |
 | | evaluate | [`notebooks/plotting_diffusion_Lorenz.ipynb`](notebooks/plotting_diffusion_Lorenz.ipynb) |
+| | LFADS length gen | [`notebooks/LFADS_Lorenz_length_generalization.ipynb`](notebooks/LFADS_Lorenz_length_generalization.ipynb) |
 | **Human BCI data** | train ae | [`notebooks/train_autoencoder_human.ipynb`](notebooks/train_autoencoder_human.ipynb) |
 | | train diffusion | [`notebooks/train_diffusion_human.ipynb`](notebooks/train_diffusion_human.ipynb)`|
 | | evaluate | [`notebooks/plotting_diffusion_human.ipynb`](notebooks/plotting_diffusion_human.ipynb)`|
