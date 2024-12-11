@@ -1,0 +1,23 @@
+denoiser_model:
+  C_in: 8
+  C: 64
+  num_blocks: 4
+  bidirectional: true
+  num_train_timesteps: 1000
+training:
+  lr: 0.001
+  num_epochs: 1000
+  num_warmup_epochs: 50
+  batch_size: 512
+  random_seed: 42
+  precision: 'no'
+exp_name: diffusion_Lorenz
+dataset:
+  system_name: Lorenz
+  signal_length: 256
+  n_ic: 5000
+  mean_rate: 0.3
+  split_frac_train: 0.7
+  split_frac_val: 0.1
+  random_seed: 42
+  softplus_beta: 2.0

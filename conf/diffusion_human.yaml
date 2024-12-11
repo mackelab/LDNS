@@ -1,0 +1,15 @@
+denoiser_model:
+  C_in: 32
+  C: 384
+  kernel: s4
+  num_blocks: 6
+  bidirectional: True
+  num_train_timesteps: 1000
+training:
+  lr: 0.001
+  num_epochs: 2000
+  num_warmup_epochs: 100
+  batch_size: 256
+  random_seed: 42
+  precision: "no"
+exp_name: diffusion_human

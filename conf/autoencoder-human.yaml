@@ -1,0 +1,25 @@
+model:
+  C_in: 128
+  C: 256
+  C_latent: 32
+  kernel: s4
+  num_blocks: 6
+  num_blocks_decoder: 0
+  num_lin_per_mlp: 2
+  bidirectional: False # important!
+dataset:
+  system_name: phoneme
+  datapath: data/human/competitionData
+  max_seqlen: 512
+training:
+  lr: 0.001
+  num_epochs: 400
+  num_warmup_epochs: 20
+  batch_size: 256
+  random_seed: 42
+  precision: bf16
+  latent_beta: 0.001
+  latent_td_beta: 0.02
+  tk_k: 5
+  mask_prob: 0.20
+exp_name: autoencoder-human

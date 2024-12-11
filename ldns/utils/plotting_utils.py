@@ -776,12 +776,9 @@ def plot_spiketrain_stats(
     to_plot=["mean_isi", "std_isi"],
 ):
     """
-    Plot mean isi and std as well as cv and cv2 as scatter plots with square axes and consistent limits.
+    Plot mean isi and std as scatter plots with square axes and consistent limits.
     """
-    if len(to_plot) == 2:
-        fig, axs = plt.subplots(1, 2, figsize=figsize)
-    else:
-        fig, axs = plt.subplots(1, 4, figsize=figsize)
+    fig, axs = plt.subplots(1, 2, figsize=figsize)
     for i, (key, value) in enumerate(spike_stats_1.items()):
         if key in to_plot:
             ax = axs.flat[i]
@@ -821,36 +818,6 @@ def plot_correlations(
     plt.ylabel("correlation")
     plt.legend()
 
-
-def plot_bits_per_spike(
-    bps_models,
-    legend_labels=None,
-    colors=None,
-    save=False,
-    save_path=None,
-    bins=20,
-    log=True,
-    figsize=cm2inch((4, 3)),
-):
-    """plot bits per spike histograms for multiple models"""
-    plt.figure(figsize=figsize)
-    for m, bp in enumerate(bps_models):
-        plt.hist(
-            bp.flatten(),
-            bins=bins,
-            alpha=0.5,
-            label=legend_labels[m] if legend_labels is not None else f"model {m}",
-            color=colors[m] if colors is not None else None,
-        )
-    if log:
-        plt.yscale("log")
-        plt.ylabel("log count")
-    plt.ylabel("count")
-    plt.xlabel("bits per spike")
-    plt.legend()
-    if save and save_path is not None:
-        plt.savefig(save_path + ".png")
-        plt.savefig(save_path + ".pdf")
 
 
 def plot_n_channel_sd(
@@ -1262,8 +1229,6 @@ def plot_3d_latent_trajectory(
     save_path=None,
     plot_real_rates=True,
 ):
-    from mpl_toolkits.mplot3d import Axes3D
-    from matplotlib.animation import FuncAnimation
     from matplotlib import cm
 
     # plot 3d latent trajectory
@@ -1319,8 +1284,6 @@ def plot_3d_latent_trajectory_direct(
     ms=1,
     lw=1,
 ):
-    from mpl_toolkits.mplot3d import Axes3D
-    from matplotlib.animation import FuncAnimation
     from matplotlib import cm
 
     # Create a figure and an axis

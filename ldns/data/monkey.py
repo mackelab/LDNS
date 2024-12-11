@@ -10,9 +10,7 @@ from tqdm.auto import tqdm
 from nlb_tools.nwb_interface import NWBDataset
 from nlb_tools.make_tensors import make_train_input_tensors
 import pickle
-
-from ldns.utils.utils import set_seed
-
+from einops import rearrange
 
 class MonkeyDataset(Dataset):
     """Dataset for monkey reaching data with neural recordings"""
@@ -40,92 +38,193 @@ class MonkeyDataset(Dataset):
         self.task = task
         self.datapath = datapath
         self.time_last = time_last
-        self.split = split
-
-        # load or create preprocessed data
-        data_dict = self._load_or_create_data(bin_width, new_data)
         
-        # process neural data
-        spikes_heldin = data_dict["train_spikes_heldin"]
-        spikes_heldout = data_dict["train_spikes_heldout"]
-        self.spikes = np.concatenate([spikes_heldin, spikes_heldout], axis=-1)
-        self.behavior = data_dict["train_behavior"]
+        # load train data dict
+        train_cache_file = os.path.join(
+            datapath, f"monkey_{task}_data_dict_train_split_{bin_width}.pkl"
+        )
+        
+        if not new_data and os.path.exists(train_cache_file):
+            data_dict_train = pickle.load(open(train_cache_file, "rb"))
+            print(f"Loaded train data dict from {train_cache_file}")
+        else:
+            # create it and save it
+            dataset = NWBDataset(datapath)
+            dataset.resample(bin_width)
+            data_dict_train = make_train_input_tensors(
+                dataset,
+                dataset_name=task,
+                trial_split="train",
+                save_file=False,
+                include_behavior=True,
+            )
+            pickle.dump(data_dict_train, open(train_cache_file, "wb"))
+            print(f"Saved train data dict to {train_cache_file}")
 
-        # handle validation split differently
-        if split == "val":
-            self.spikes = self.spikes[len(self.spikes)//2:]
-            self.behavior = self.behavior[len(self.behavior)//2:]
-        elif split == "train":
-            # for training, include first half of validation data
-            val_spikes_heldin = data_dict["train_spikes_heldin"]
-            val_spikes_heldout = data_dict["train_spikes_heldout"]
-            val_spikes = np.concatenate([val_spikes_heldin, val_spikes_heldout], axis=-1)
-            val_behavior = data_dict["train_behavior"]
+        # load val data dict
+        val_cache_file = os.path.join(
+            datapath, f"monkey_{task}_data_dict_val_split_{bin_width}.pkl"
+        )
+        
+        if not new_data and os.path.exists(val_cache_file):
+            data_dict_val = pickle.load(open(val_cache_file, "rb"))
+            print(f"Loaded val data dict from {val_cache_file}")
+        else:
+            # create it and save it
+            dataset = NWBDataset(datapath)
+            dataset.resample(bin_width)
+            data_dict_val = make_train_input_tensors(
+                dataset,
+                dataset_name=task,
+                trial_split="val",
+                save_file=False,
+                include_behavior=True,
+            )
+            pickle.dump(data_dict_val, open(val_cache_file, "wb"))
+            print(f"Saved val data dict to {val_cache_file}")
+
+        if split == "train":
+            # Process train data
+            train_spikes_heldin = data_dict_train["train_spikes_heldin"]
+            train_spikes_heldout = data_dict_train["train_spikes_heldout"]
+            train_spikes = np.concatenate([train_spikes_heldin, train_spikes_heldout], axis=-1)
+            train_behavior = data_dict_train["train_behavior"]
+
+            # load 50% of val
+            train_spikes_heldin = data_dict_val["train_spikes_heldin"]
+            train_spikes_heldout = data_dict_val["train_spikes_heldout"]
+            train_spikes2 = np.concatenate([train_spikes_heldin, train_spikes_heldout], axis=-1)
             
-            # use only first half of validation data
-            val_spikes = val_spikes[:len(val_spikes)//2]
-            val_behavior = val_behavior[:len(val_behavior)//2]
+            train_behavior2 = data_dict_val["train_behavior"][:len(train_spikes2)//2]
+            train_spikes2 = train_spikes2[:len(train_spikes2)//2]
+
+            self.train_spikes = np.concatenate([train_spikes, train_spikes2], axis=0)
+            self.behavior = np.concatenate([train_behavior, train_behavior2], axis=0)
+
+        else:  # val split
+            # load rest 50% of val
+            train_spikes_heldin = data_dict_val["train_spikes_heldin"]
+            train_spikes_heldout = data_dict_val["train_spikes_heldout"]
+            train_spikes = np.concatenate([train_spikes_heldin, train_spikes_heldout], axis=-1)
+            train_behavior = data_dict_val["train_behavior"]
             
-            # concatenate with training data
-            self.spikes = np.concatenate([self.spikes, val_spikes], axis=0)
-            self.behavior = np.concatenate([self.behavior, val_behavior], axis=0)
+            self.train_spikes = train_spikes[len(train_spikes)//2:]
+            self.behavior = train_behavior[len(train_behavior)//2:]
 
         # convert to torch tensors
-        self.spikes = torch.from_numpy(self.spikes).float()
+        self.train_spikes = torch.from_numpy(self.train_spikes).float()
         self.behavior = torch.from_numpy(self.behavior).float()
 
-    def _load_or_create_data(self, bin_width: int, new_data: bool) -> dict:
-        """load preprocessed data or create from raw files"""
-        cache_file = os.path.join(
-            self.datapath, 
-            f"monkey_{self.task}_data_dict_{self.split}_split_{bin_width}.pkl"
-        )
-        
-        if not new_data and os.path.exists(cache_file):
-            with open(cache_file, "rb") as f:
-                return pickle.load(f)
-        
-        # create new preprocessed data
-        print(f"Creating new preprocessed data from dandi archive at {self.datapath}...")
-        dataset = NWBDataset(self.datapath)
-        dataset.resample(bin_width)
-        
-        data_dict = make_train_input_tensors(
-            dataset,
-            dataset_name=self.task,
-            trial_split=self.split,
-            save_file=False,
-            include_behavior=True,
-        )
-        
-        # save preprocessed data
-        with open(cache_file, "wb") as f:
-            pickle.dump(data_dict, f)
-            
-        return data_dict
+    def __len__(self):
+        return len(self.train_spikes)
 
-    def __len__(self) -> int:
-        return len(self.spikes)
-
-    def __getitem__(self, idx: int) -> dict:
-        """Get a sample from the dataset
-
-        Args:
-            idx: index of sample to get
-
-        returns:
-            dictionary containing:
-                signal: spike counts [C, T] if time_last else [T, C]
-                behavior: behavioral variables [2, T] if time_last else [T, 2]
-        """
+    def __getitem__(self, idx):
         if self.time_last:
             return {
-                "signal": self.spikes[idx].T,
-                "behavior": self.behavior[idx].T,
+                "signal": self.train_spikes[idx].T,  # [C, L]
+                "behavior": self.behavior[idx].T,  # [2, L]
             }
         return {
-            "signal": self.spikes[idx],
+            "signal": self.train_spikes[idx],  # [L, C]
+            "behavior": self.behavior[idx],  # [L, 2]
+        }
+
+
+
+class LatentMonkeyDataset(torch.utils.data.Dataset):
+    """Dataset class for latent representations of monkey neural data.
+    
+    Takes a dataloader of neural activity and behavior, and uses a trained autoencoder
+    to create latent representations. Also computes behavior angles and normalizes data.
+
+    Args:
+        dataloader: DataLoader containing neural activity and behavior
+        ae_model: Trained autoencoder model for encoding neural activity
+        clip: Whether to clip latent values to [-5,5]. Defaults to True.
+        latent_means: Optional precomputed means for latent normalization
+        latent_stds: Optional precomputed stds for latent normalization
+    """
+    def __init__(
+        self, dataloader, ae_model, clip=True, latent_means=None, latent_stds=None
+    ):
+        self.full_dataloader = dataloader
+        self.ae_model = ae_model
+        # get latent representations and original data
+        self.latents, self.train_spikes, self.behavior = self.create_latents()
+        
+        # normalize latents to N(0,1) using provided or computed stats
+        if latent_means is None or latent_stds is None:
+            self.latent_means = self.latents.mean(dim=(0, 2)).unsqueeze(0).unsqueeze(2)
+            self.latent_stds = self.latents.std(dim=(0, 2)).unsqueeze(0).unsqueeze(2)
+        else:
+            self.latent_means = latent_means
+            self.latent_stds = latent_stds
+        self.latents = (self.latents - self.latent_means) / self.latent_stds
+        
+        # optionally clip extreme values
+        if clip:
+            self.latents = self.latents.clamp(-5, 5)
+
+        # verify data alignment
+        assert len(self.latents) == len(self.behavior) and len(self.latents) == len(
+            self.train_spikes
+        ), f"Lengths of latents, behavior, and spikes do not match: {len(self.latents)}, {len(self.behavior)}, {len(self.train_spikes)}"
+
+        # scale behavior values
+        self.behavior = self.behavior / 1e3  # convert to meters
+
+        # compute cumulative behavior trajectory
+        self.behavior_cumsum = torch.cumsum(self.behavior, dim=-1)
+
+        # compute reach angles from behavior at 50th timestep
+        self.behavior_angles = torch.atan2(
+            self.behavior[:, 1, 50], self.behavior[:, 0, 50]
+        )
+        self.behavior_angles = rearrange(self.behavior_angles, "B -> B 1")
+
+    def create_latents(self):
+        """Create latent representations using the autoencoder.
+        
+        Returns:
+            tuple of (latents, spikes, behavior) tensors
+        """
+        latent_dataset = []
+        train_spikes = []
+        behavior = []
+        self.ae_model.eval()
+        for i, batch in tqdm(
+            enumerate(self.full_dataloader),
+            total=len(self.full_dataloader),
+            desc="Creating latent dataset",
+        ):
+            with torch.no_grad():
+                z = self.ae_model.encode(batch["signal"])
+                latent_dataset.append(z.cpu())
+                train_spikes.append(batch["signal"].cpu())
+                behavior.append(batch["behavior"].cpu())
+        return torch.cat(latent_dataset), torch.cat(train_spikes), torch.cat(behavior)
+
+    def __len__(self):
+        return len(self.latents)
+
+    def __getitem__(self, idx):
+        """Get a sample from the dataset.
+        
+        Args:
+            idx: Index of sample to get
+            
+        Returns:
+            dict containing:
+                signal: Original spike counts
+                latent: Latent representation
+                behavior: Behavioral variables
+                behavior_angle: Reach angle
+        """
+        return {
+            "signal": self.train_spikes[idx],
+            "latent": self.latents[idx],
             "behavior": self.behavior[idx],
+            "behavior_angle": self.behavior_angles[idx],
         }
 
 
@@ -227,7 +326,7 @@ if __name__ == "__main__":
     print(f"\nDataset size: {len(dataset)}")
     
     sample = dataset[0]
-    print(f"Sample shapes:")
+    print("Sample shapes:")
     print(f"Signal: {sample['signal'].shape}")
     print(f"Behavior: {sample['behavior'].shape}")
     

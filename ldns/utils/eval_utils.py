@@ -4,14 +4,16 @@ import torch
 
 # ------------------ dataset classes ------------------
 
+
 class ReconDataset(torch.utils.data.Dataset):
     """Dataset class for reconstruction data containing latents, samples and rates.
-    
+
     Args:
         latents: Latent vectors
         samples: Sample data
         rates: Rate data
     """
+
     def __init__(self, latents, samples, rates):
         self.latents = latents
         self.samples = samples
@@ -25,6 +27,7 @@ class ReconDataset(torch.utils.data.Dataset):
 
 
 # ------------------ rate statistics ------------------
+
 
 def average_rates(data, mode="neur", fps=None):
     """
@@ -49,9 +52,7 @@ def average_rates(data, mode="neur", fps=None):
         # Average across the time dimension only
         averaged = np.nanmean(data, axis=1).flatten()
     else:
-        raise ValueError(
-            "Invalid mode. Choose either 'neuronwise' or 'neurontimewise' or 'neuronsamplewise'."
-        )
+        raise ValueError("Invalid mode. Choose either 'neuronwise' or 'neurontimewise' or 'neuronsamplewise'.")
 
     if fps is not None:
         # Convert to Hz by multiplying with the frame rate
@@ -81,9 +82,7 @@ def std_rates(data, mode="neur", fps=None):
         # Average across the time dimension only
         stdev = np.nanstd(data, axis=1).flatten()
     else:
-        raise ValueError(
-            "Invalid mode. Choose either 'neuronwise' or 'neurontimewise' or 'neuronsamplewise'."
-        )
+        raise ValueError("Invalid mode. Choose either 'neuronwise' or 'neurontimewise' or 'neuronsamplewise'.")
 
     if fps is not None:
         # Convert to Hz by multiplying with the frame rate
@@ -93,10 +92,11 @@ def std_rates(data, mode="neur", fps=None):
 
 # ------------------ correlation analysis ------------------
 
+
 def correlation_matrix(data, sample=None, mode="concatenate"):
     """
     Compute averaged correlation matrix across samples.
-    
+
     Args:
         data: Input data array
         sample: Sample index to compute correlation for
@@ -120,7 +120,7 @@ def correlation_matrix(data, sample=None, mode="concatenate"):
         return np.corrcoef(data.T)
 
 
-def get_corr_mat(data, mod='trial', name=''):
+def get_corr_mat(data, mod="trial", name=""):
     """
     Compute correlation matrix averaged across trials or all data.
 
@@ -132,9 +132,9 @@ def get_corr_mat(data, mod='trial', name=''):
     Returns:
         tuple: (correlation matrix, name string)
     """
-    name = 'Corr Matrix ' + name
+    name = "Corr Matrix " + name
     _, no_samples, xdim = data.shape
-    if mod=='trial':
+    if mod == "trial":
         C_corr = np.zeros((xdim, xdim))
 
         for s in range(no_samples):
@@ -145,6 +145,7 @@ def get_corr_mat(data, mod='trial', name=''):
         data_reshaped = np.reshape(np.transpose(data, (2, 1, 0)), (xdim, -1))
         C_corr = np.corrcoef(data_reshaped)
     return C_corr, name
+
 
 def group_neurons_temp_corr(data_x, num_groups=4):
     """
@@ -158,13 +159,13 @@ def group_neurons_temp_corr(data_x, num_groups=4):
         list: Groups of neuron indices
     """
     assert isinstance(data_x, np.ndarray), "Input data has to be numpy array!"
-    corr_mat, _ = get_corr_mat(data_x, mod='all')
+    corr_mat, _ = get_corr_mat(data_x, mod="all")
     np.fill_diagonal(corr_mat, 0)
-    c_val = np.sum(corr_mat ** 2, axis=0)
+    c_val = np.sum(corr_mat**2, axis=0)
     sorted_neurons = np.argsort(-c_val)
     g_size = data_x.shape[-1] // num_groups
     neuron_groups = []
-    neuron_groups = [sorted_neurons[i:i + g_size] for i in range(0, len(sorted_neurons), g_size)]
+    neuron_groups = [sorted_neurons[i : i + g_size] for i in range(0, len(sorted_neurons), g_size)]
     if len(neuron_groups) > num_groups:
         neuron_groups[-2] = np.concatenate((neuron_groups[-2], neuron_groups[-1]), axis=0)
         del neuron_groups[-1]
@@ -173,7 +174,8 @@ def group_neurons_temp_corr(data_x, num_groups=4):
 
 # ------------------ temporal correlation ------------------
 
-def get_temp_corr(x1, x2, nlags=10, mode='biased'):
+
+def get_temp_corr(x1, x2, nlags=10, mode="biased"):
     """
     Compute temporal correlation between two time series.
 
@@ -186,22 +188,22 @@ def get_temp_corr(x1, x2, nlags=10, mode='biased'):
         np.ndarray: Temporal correlation values
     """
     T = x1.shape[0]
-    assert (x2.shape[0] == T), 'Must be same length!'
+    assert x2.shape[0] == T, "Must be same length!"
 
     norm_factor = np.ones((nlags * 2 + 1,))
-    if mode == 'biased':
+    if mode == "biased":
         norm_factor = norm_factor * T
-    elif mode == 'unbiased':
+    elif mode == "unbiased":
         norm_factor = T - abs(np.arange(-nlags, nlags + 1))
 
-    full_corr = np.correlate(x1, x2, 'full')
+    full_corr = np.correlate(x1, x2, "full")
     zero_lag_ind = int(((2 * T - 1) + 1) / 2 - 1)
 
-    corr_result = full_corr[zero_lag_ind - nlags:zero_lag_ind + nlags + 1]
+    corr_result = full_corr[zero_lag_ind - nlags : zero_lag_ind + nlags + 1]
     return np.divide(corr_result, norm_factor)
 
 
-def get_temp_corr_trial_av(data_x, nlags=10, mode='biased'):
+def get_temp_corr_trial_av(data_x, nlags=10, mode="biased"):
     """
     Compute trial-averaged temporal correlations.
 
@@ -228,7 +230,7 @@ def get_temp_corr_trial_av(data_x, nlags=10, mode='biased'):
     return np.array(cross_corr), np.array(auto_corr)
 
 
-def get_temp_corr_summary(data_x, groups, nlags=10, binWidth=100, mode='biased', batch_first=False):
+def get_temp_corr_summary(data_x, groups, nlags=10, binWidth=100, mode="biased", batch_first=False):
     """
     Compute temporal correlation summary for neuron groups.
 
@@ -265,6 +267,38 @@ def get_temp_corr_summary(data_x, groups, nlags=10, binWidth=100, mode='biased',
 
 # ------------------ spike train analysis ------------------
 
+
+def counts_to_spike_trains_ragged(bin_counts, fps):
+    """
+    Generate spike trains from bin counts. Especially for ragged data.
+
+    Parameters:
+    - bin_counts: List of 2D numpy arrays (n_seqlen_i, n_neurons) with spike counts.
+    - fps: Frames per second, defining the duration of each bin.
+
+    Returns:
+    - A dictionary with keys as (sample_index, neuron_index) and values as arrays of spike times.
+    """
+    n_samples = len(bin_counts)
+    n_neurons = bin_counts[0].shape[1]
+    bin_duration = 1.0 / fps
+    spike_trains = {}
+
+    for sample_idx in range(n_samples):
+        for neuron_idx in range(n_neurons):
+            spike_times = []
+            n_seqlen = bin_counts[sample_idx].shape[0]
+            for bin_idx in range(n_seqlen):
+                count = int(bin_counts[sample_idx][bin_idx, neuron_idx])
+                if count > 0:
+                    start_time = bin_idx * bin_duration
+                    spikes = np.linspace(start_time, start_time + bin_duration, count + 2)[1:-1]
+                    spike_times.extend(spikes)
+            spike_trains[(sample_idx, neuron_idx)] = np.array(spike_times)
+
+    return spike_trains
+
+
 def counts_to_spike_trains(bin_counts, fps):
     """
     Generate spike trains from bin counts.
@@ -287,15 +321,13 @@ def counts_to_spike_trains(bin_counts, fps):
                 count = int(bin_counts[sample_idx, bin_idx, neuron_idx])
                 if count > 0:
                     start_time = bin_idx * bin_duration
-                    spikes = np.linspace(
-                        start_time, start_time + bin_duration, count + 2
-                    )[1:-1]
+                    spikes = np.linspace(start_time, start_time + bin_duration, count + 2)[1:-1]
                     spike_times.extend(spikes)
             spike_trains[(sample_idx, neuron_idx)] = np.array(spike_times)
 
     return spike_trains
 
-        
+
 def compute_spike_stats_per_neuron(spike_trains, n_samples, n_neurons, mean_output=True):
     """
     Compute statistics for spike trains.
@@ -307,50 +339,29 @@ def compute_spike_stats_per_neuron(spike_trains, n_samples, n_neurons, mean_outp
         mean_output: Whether to output mean values
 
     Returns:
-        dict: Statistics including mean ISIs per neuron, CV, and CV2
+        dict: mean and std ISIs per neuron
     """
     isi = {n: [] for n in range(n_neurons)}
     for (sample_idx, neuron_idx), spikes in spike_trains.items():
-            if len(spikes) > 1:
-                isis = np.diff(spikes)
-                isi[neuron_idx].extend(isis)
-                
+        if len(spikes) > 1:
+            isis = np.diff(spikes)
+            isi[neuron_idx].extend(isis)
+
     mean_isi = np.full(n_neurons, np.nan)
     std_isi = np.full(n_neurons, np.nan)
-    cv_isi = np.full(n_neurons, np.nan)
-    cv2_isi = np.full(n_neurons, np.nan)
 
     for n in range(n_neurons):
         mean_isi[n] = np.mean(isi[n]) if len(isi[n]) > 0 else np.nan
         std_isi[n] = np.std(isi[n]) if len(isi[n]) > 0 else np.nan
-        cv_isi[n] = std_isi[n] / mean_isi[n] if mean_isi[n] != 0 else np.nan
-        cv2_isi[n] = compute_cv2(np.array(isi[n]))
-        
+
     return {
-            "mean_isi": mean_isi,
-            "std_isi": std_isi,
-            "cv_isi": cv_isi,
-            "cv2": cv2_isi,
-        }
-
-
-def compute_cv2(isis):
-    """
-    Compute CV2 from ISIs.
-
-    Args:
-        isis: 1D numpy array of inter-spike intervals
-
-    Returns:
-        float: Mean CV2 value
-    """
-    if len(isis) < 2:
-        return np.nan
-    cv2_values = 2 * np.abs(isis[:-1] - isis[1:]) / (isis[:-1] + isis[1:])
-    return np.nanmean(cv2_values)
+        "mean_isi": mean_isi,
+        "std_isi": std_isi,
+    }
 
 
 # ------------------ model evaluation metrics ------------------
+
 
 def reconstruct_spikes(model, full_dataloader):
     """
@@ -375,12 +386,8 @@ def reconstruct_spikes(model, full_dataloader):
         latents.append(z)
         spikes.append(signal.cpu())
         rec_spikes.append(torch.poisson(output_rates.cpu()))
-        
-    return {
-        'latents': torch.cat(latents, 0),
-        'spikes': torch.cat(spikes, 0),
-        'rec_spikes': torch.cat(rec_spikes, 0)
-    }
+
+    return {"latents": torch.cat(latents, 0), "spikes": torch.cat(spikes, 0), "rec_spikes": torch.cat(rec_spikes, 0)}
 
 
 def rmse_nan(y_pred, y):
@@ -394,7 +401,8 @@ def rmse_nan(y_pred, y):
     Returns:
         float: RMSE value
     """
-    return np.sqrt(np.nanmean((y_pred - y)**2))
+    return np.sqrt(np.nanmean((y_pred - y) ** 2))
+
 
 def kl_div(p, q):
     """

@@ -1,0 +1,21 @@
+denoiser_model:
+  C_in: 16
+  C: 256
+  kernel: s4
+  num_blocks: 6
+  bidirectional: true
+  num_train_timesteps: 1000
+training:
+  lr: 0.001
+  weight_decay: 0.0
+  num_epochs: 2000
+  num_warmup_epochs: 50
+  batch_size: 512
+  random_seed: 42
+  precision: 'no'
+exp_name: diffusion_monkey_velocity_conditioned
+dataset:
+  system_name: monkey
+  task: mc_maze
+  datapath: data/000128/sub-Jenkins/
+  signal_length: 140

@@ -1,0 +1,28 @@
+model:
+  C_in: 128
+  C: 256
+  C_latent: 8
+  num_blocks: 4
+  num_blocks_decoder: 0
+  num_lin_per_mlp: 2
+dataset:
+  system_name: Lorenz
+  signal_length: 256
+  n_ic: 5000
+  mean_rate: 0.3
+  split_frac_train: 0.7
+  split_frac_val: 0.1
+  random_seed: 42
+  softplus_beta: 2.0
+training:
+  lr: 0.001
+  weight_decay: 0.01
+  num_epochs: 200
+  num_warmup_epochs: 10
+  batch_size: 512
+  random_seed: 42
+  precision: bf16
+  latent_beta: 0.01
+  latent_td_beta: 0.01
+  mask_prob: 0.2
+exp_name: autoencoder-Lorenz_z=8

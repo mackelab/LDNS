@@ -1,8 +1,6 @@
 # %%
-import math
 import multiprocessing
-import os
-from typing import List, Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import torch
@@ -10,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm.auto import tqdm
 from dysts.flows import Lorenz
 
-from ldns.utils.utils import set_seed, standardize_array
+from ldns.utils.utils import set_seed
 
 
 def simulate_single_trajectory(args: Tuple) -> np.ndarray:
@@ -78,7 +76,7 @@ def simulate_attractor_parallel(
         for result in tqdm(
             pool.imap(simulate_single_trajectory, args_list),
             total=num_seq,
-            desc=f"Simulating Lorenz",
+            desc="Simulating Lorenz",
         ):
             results.append(result)
 
@@ -164,6 +162,58 @@ class AttractorDataset(Dataset):
             "latents": self.latents[idx],
             "rates": self.rates[idx]
         }
+
+class LatentDataset(torch.utils.data.Dataset):
+    """Dataset class to store latents from autoencoder for training the diffusion model.
+    init takes a dataloader and an autoencoder model.
+    """
+    def __init__(
+        self, dataloader, ae_model, clip=True, latent_means=None, latent_stds=None
+    ):
+        """
+        Args:
+            dataloader: dataloader to get the data from
+            ae_model: autoencoder model to encode the data
+            clip: whether to clip the latents to -5, 5 (does not change perf, but stabilizes training)
+            latent_means: means of the latent dataset (if None, compute from the dataset)
+            latent_stds: stds of the latent dataset (if None, compute from the dataset)
+        """
+        self.full_dataloader = dataloader
+        self.ae_model = ae_model
+        self.latents = self.create_latents()
+        # normalize to N(0, 1)
+        if latent_means is None or latent_stds is None:
+            self.latent_means = self.latents.mean(dim=(0, 2)).unsqueeze(0).unsqueeze(2)
+            self.latent_stds = self.latents.std(dim=(0, 2)).unsqueeze(0).unsqueeze(2)
+        else:
+            self.latent_means = latent_means
+            self.latent_stds = latent_stds
+        self.latents = (self.latents - self.latent_means) / self.latent_stds
+        if clip:
+            self.latents = self.latents.clamp(-5, 5)
+
+    def create_latents(self):
+        """
+        Create the latents from the autoencoder.
+        """
+        latent_dataset = []
+        self.ae_model.eval()
+        for i, batch in tqdm(
+            enumerate(self.full_dataloader),
+            total=len(self.full_dataloader),
+            desc="Creating latent dataset",
+        ):
+            with torch.no_grad():
+                z = self.ae_model.encode(batch["signal"])
+                latent_dataset.append(z.cpu())
+        return torch.cat(latent_dataset)
+
+    def __len__(self):
+        return len(self.latents)
+
+    def __getitem__(self, idx):
+        return self.latents[idx]
+
 
 def get_attractor_dataloaders(
     system_name: str,

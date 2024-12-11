@@ -1,0 +1,3 @@
+_target_: lfads_torch.datamodules.BasicDataModule
+datafile_pattern: baselines/data/monkey.h5 # change this appropriately
+batch_size: 256

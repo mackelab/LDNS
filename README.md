@@ -3,7 +3,7 @@
 ![LDNS Method Overview](./assets/LDNS_schematic.png)
 
 
-This repository contains research code for the NeurIPS 2024 Spotlight paper:   
+This repository contains research code for the NeurIPS 2024 paper:   
  [***Latent Diffusion for Neural Spiking Data***](https://arxiv.org/abs/2407.08751)   
  by [Kapoor*](https://jkapoor.me), [Schulz*](https://www.linkedin.com/in/auguste-schulz-b5a57a168/), [Vetter](https://www.linkedin.com/in/julius-vetter-060ab11b8?originalSubdomain=de), [Pei](https://www.linkedin.com/in/felix-pei-b41742196/), [Gao†](https://www.rdgao.com), and [Macke†](https://mackelab.org) (2024).
 
@@ -36,22 +36,34 @@ If you want to run the experiments on the human and monkey data, download and st
 The core model and data loading code is in the [`ldns` directory](ldns). Training and evaluation is done in .ipynb files in the [`notebooks` directory](notebooks).
 | Dataset | Train and Evaluate | Notebook |
 |---------|-------------------|----------|
-| **Lorenz system** | autoencoder | [`notebooks/train_autoencoder_Lorenz.ipynb`](notebooks/train_autoencoder_Lorenz.ipynb) |
-| | diffusion model | [`notebooks/train_diffusion_Lorenz.ipynb`](notebooks/train_diffusion_Lorenz.ipynb) |
-| **Human BCI data** | autoencoder | `notebooks/train_autoencoder_human.ipynb`|
-| | diffusion model | `notebooks/train_diffusion_human.ipynb`|
-| **Monkey reach data** <br> | autoencoder | `notebooks/train_autoencoder_monkey.ipynb` |
-| | diffusion model (unconditional) | `notebooks/train_diffusion_monkey.ipynb` |
-| | diffusion model (angle-conditioned) | `notebooks/train_diffusion_monkey_angle_conditioned.ipynb` |
-| | diffusion model (velocity-conditioned) | `notebooks/train_diffusion_monkey_velocity_conditioned.ipynb` |
+| **Lorenz system** | train ae | [`notebooks/train_autoencoder_Lorenz.ipynb`](notebooks/train_autoencoder_Lorenz.ipynb) |
+| | train diffusion | [`notebooks/train_diffusion_Lorenz.ipynb`](notebooks/train_diffusion_Lorenz.ipynb) |
+| | evaluate | [`notebooks/plotting_diffusion_Lorenz.ipynb`](notebooks/plotting_diffusion_Lorenz.ipynb) |
+| **Human BCI data** | train ae | [`notebooks/train_autoencoder_human.ipynb`](notebooks/train_autoencoder_human.ipynb) |
+| | train diffusion | [`notebooks/train_diffusion_human.ipynb`](notebooks/train_diffusion_human.ipynb)`|
+| | evaluate | [`notebooks/plotting_diffusion_human.ipynb`](notebooks/plotting_diffusion_human.ipynb)`|
+| **Monkey reach data** <br> | train ae | [`notebooks/train_autoencoder_monkey.ipynb`](notebooks/train_autoencoder_monkey.ipynb) |
+| | train diffusion (unconditional) | [`notebooks/train_diffusion_monkey.ipynb`](notebooks/train_diffusion_monkey.ipynb) |
+| | train diffusion (angle-conditioned) | [`notebooks/train_and_plot_diffusion_monkey_angle_conditioned.ipynb`](notebooks/train_and_plot_diffusion_monkey_angle_conditioned.ipynb) |
+| | train diffusion (velocity-conditioned) | [`notebooks/train_and_plot_diffusion_monkey_velocity_conditioned.ipynb`](notebooks/train_and_plot_diffusion_monkey_velocity_conditioned.ipynb) |
+| | train spike history | [`notebooks/train_spike_history_monkey.ipynb`](notebooks/train_spike_history_monkey.ipynb) |
+| | evaluate (unconditional) | [`notebooks/plotting_diffusion_monkey_unconditional_with_baselines.ipynb`](notebooks/plotting_diffusion_monkey_unconditional_with_baselines.ipynb) |
 
-> **Note**: we are currently cleaning up the notebooks and will update this section soon.
+
+### Checkpoints and spike samples
+For better reproducibility, we provide the checkpoints and spike samples for the experiments in this [OneDrive](https://unitc-my.sharepoint.com/:f:/g/personal/iiojk01_cloud_uni-tuebingen_de/EjX79NZTjzhEmUej_ZzOn-cBD1qCW85DGChJFXxOWiJpcw?e=9s5lz1) link. Please download the artifacts and spike samples in the `exp/stored_models` and `exp/stored_spike_samples` directory, and appropriately change the paths in the plotting notebooks.
 
 ## Baselines for the Lorenz and Monkey Reach Data
 
-In the paper, we compared LDNS to a number of VAE-based baselines. The code for these baselines can be found in the [`baselines` directory](baselines).
+In the paper, we compared LDNS to a number of VAE-based baselines. The code for these baselines can be found in the [`baselines`](baselines) directory.
 
-> Refactoring and cleaning of the baseline code is in progress. We appreciate your patience!
+The code for [LFADS (Pandarinath et al, 2018)](https://www.nature.com/articles/s41592-018-0109-9) can be found in the [`baselines/lfads`](baselines/lfads) directory. We quantitatively compare LFADS samples with LDNS on the unconditional Monkey reach data, and in supplementary material, qualitatively compare the length generalization of LFADS with LDNS on the Lorenz dataset.
+
+We additionally use [TNDM (Hennig et al, 2021)](https://arxiv.org/abs/2110.14853) and [pi-VAE (Zhou et al, 2020)](https://arxiv.org/abs/2011.04798) as baselines for the unconditional monkey reach data in supplementary material. The code for TNDM can be found in the [`baselines/tndm`](baselines/tndm) directory, and the code for pi-VAE can be found in the [`baselines/pivae.py`](baselines/pivae.py) file.
+
+After training, rates are sampled and stored by running code in [`baselines/lfads/sample_lfads.ipynb`](baselines/lfads/sample_lfads.ipynb), and the TNDM and pi-VAE samples are stored in [`baselines/tndm/tndm_reach.ipynb`](baselines/tndm/tndm_reach.ipynb) and [`baselines/pivae.py`](baselines/pivae.py) respectively. We use these samples for comparisons in the corresponding analysis notebooks in the [`notebooks`](notebooks) directory.
+
+The spike samples are provided in the link above.
 
 ## Citation
 

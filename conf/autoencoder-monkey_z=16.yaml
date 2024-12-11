@@ -1,0 +1,25 @@
+model:
+  C_in: 182
+  C: 256
+  C_latent: 16
+  num_blocks: 4
+  num_blocks_decoder: 0
+  num_lin_per_mlp: 2
+  bidirectional: false
+dataset:
+  system_name: monkey
+  task: mc_maze
+  datapath: data/000128/sub-Jenkins/
+  signal_length: 140
+training:
+  lr: 0.001
+  num_epochs: 260
+  num_warmup_epochs: 10
+  batch_size: 64
+  random_seed: 42
+  precision: 'no'
+  latent_beta: 0.001
+  latent_td_beta: 0.2
+  tk_k: 5
+  mask_prob: 0.5
+exp_name: autoencoder-monkey_z=16
