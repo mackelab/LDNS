@@ -7,6 +7,7 @@ from ldns.utils.utils import count_parameters
 
 
 def _get_signal_length(dataset_cfg):
+    """Return the sequence length from a dataset config."""
     if "signal_length" in dataset_cfg:
         return dataset_cfg.signal_length
     if "max_seqlen" in dataset_cfg:
@@ -15,10 +16,12 @@ def _get_signal_length(dataset_cfg):
 
 
 def _load_config(path):
+    """Load a YAML config file from disk."""
     return OmegaConf.load(path)
 
 
 def _init_autoencoder(cfg):
+    """Initialize an AutoEncoder model from a config."""
     return AutoEncoder(
         C_in=cfg.model.C_in,
         C=cfg.model.C,
@@ -35,6 +38,7 @@ def _init_autoencoder(cfg):
 
 
 def _init_denoiser(cfg, dataset_cfg):
+    """Initialize a Denoiser model from a config and dataset settings."""
     return Denoiser(
         C_in=cfg.denoiser_model.C_in,
         C=cfg.denoiser_model.C,
@@ -46,6 +50,7 @@ def _init_denoiser(cfg, dataset_cfg):
 
 
 def report_parameter_counts():
+    """Print and return parameter counts for autoencoder and diffusion models."""
     repo_root = Path(__file__).resolve().parents[2]
     conf_dir = repo_root / "conf"
     datasets = {
